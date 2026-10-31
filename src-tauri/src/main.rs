@@ -50,7 +50,8 @@ async fn get_local_versions(root:String)->Result<Vec<GameVersion>,String>{
 #[tauri::command] async fn get_account(state:State<'_,AppState>)->Result<Option<AccountView>,String>{Ok(state.account.lock().map_err(|_|"Account state unavailable".to_string())?.as_ref().map(AccountView::from))}
 #[tauri::command]
 async fn sign_in(app:AppHandle,state:State<'_,AppState>)->Result<AccountView,String>{
- let flow=make_authenticator()?.device_code().await.map_err(|e|e.to_string())?;
+ let authenticator=make_authenticator()?;
+ let flow=authenticator.device_code().await.map_err(|e|e.to_string())?;
  app.emit("login-code",LoginCode{user_code:flow.user_code().into(),url:flow.verification_uri_complete(),message:flow.message().into()}).map_err(|e|e.to_string())?;
  let account=flow.wait().await.map_err(|e|format!("Microsoft sign-in failed: {e}"))?;let view=AccountView::from(&account);*state.account.lock().map_err(|_|"Account state unavailable".to_string())?=Some(account);let _=app.emit("account-updated",view.clone());Ok(view)
 }
