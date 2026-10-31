@@ -10,21 +10,35 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [{
-      "title": "Nova Client",
-      "width": 1280,
-      "height": 820,
-      "minWidth": 900,
-      "minHeight": 640,
-      "center": true,
-      "resizable": true
-    }],
+    "windows": [
+      {
+        "title": "Nova Client",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 900,
+        "minHeight": 640,
+        "center": true,
+        "resizable": true
+      }
+    ],
     "security": {
       "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost https: data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; script-src 'self'; connect-src ipc: http://ipc.localhost ws://127.0.0.1:1420 https://piston-meta.mojang.com https://api.modrinth.com https://cdn.modrinth.com https://api.mcsrvstat.us https://api.minecraftservices.com https://textures.minecraft.net;"
     }
   },
   "bundle": {
     "active": true,
-    "targets": ["app", "deb", "rpm", "appimage", "nsis", "msi", "dmg"]
+    "targets": [
+      "app",
+      "deb",
+      "rpm",
+      "appimage",
+      "nsis",
+      "msi",
+      "dmg"
+    ],
+    "icon": [
+      "icons/icon.png",
+      "icons/icon.ico"
+    ]
   }
 }
