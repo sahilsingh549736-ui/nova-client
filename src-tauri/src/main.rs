@@ -19,7 +19,7 @@ impl From<&Account> for AccountView {
  }
 }
 #[derive(Serialize)] struct GameVersion{id:String,release_time:String}
-#[derive(Serialize)] #[serde(rename_all="camelCase")] struct LoginCode{user_code:String,url:String,message:String}
+#[derive(Clone, Serialize)] #[serde(rename_all="camelCase")] struct LoginCode{user_code:String,url:String,message:String}
 #[derive(Debug,Deserialize)] struct ModrinthFile{filename:String,url:String,#[serde(default)]primary:bool}
 #[derive(Debug,Deserialize)] struct ModrinthVersion{files:Vec<ModrinthFile>}
 #[derive(Debug,Deserialize)] struct ModrinthSearchResponse{hits:Vec<ModrinthHit>}
@@ -95,7 +95,7 @@ async fn launch_game(app:AppHandle,state:State<'_,AppState>,version:String,profi
  let mut account=account_snapshot(&state)?;if !matches!(account.meta.ownership,Ownership::Owned|Ownership::GamePass){return Err("This Microsoft account does not have confirmed Java Edition access.".into())}
  if account.is_expired(){account=make_authenticator()?.refresh(&account).await.map_err(|e|e.to_string())?;*state.account.lock().map_err(|_|"Account state unavailable".to_string())?=Some(account.clone())}
  let root=match game_root.filter(|s|!s.trim().is_empty()){Some(p)=>{let p=PathBuf::from(p);if !p.is_absolute(){return Err("Minecraft folder must be absolute".into())}p},None=>app.path().app_data_dir().map_err(|e|e.to_string())?.join("minecraft")};tokio::fs::create_dir_all(&root).await.map_err(|e|e.to_string())?;
- let name=format!("nova-{version}");let custom=game_root_is_custom(&root,&app);let mut o=LaunchOptions::new(root.to_string_lossy().to_string(),version.clone());o.instance=if custom{None}else{Some(name.clone())};o.memory.min="512M".into();o.memory.max=memory.into();o.download_concurrency=3;o.screen.width=1280;o.screen.height=720;
+ let name=format!("nova-{version}");let custom=game_root_is_custom(&root,&app);let mut o=LaunchOptions::new(root.to_string_lossy().to_string(),version.clone());o.instance=if custom{None}else{Some(name.clone())};o.memory.min="512M".into();o.memory.max=memory.into();o.download_concurrency=3;o.screen.width=Some(1280);o.screen.height=Some(720);
  if let Some(k)=kind{o.loader.kind=Some(k);o.loader.build="latest".into();o.loader.enable=true}
  if let Some(a)=server_address.filter(|s|!s.trim().is_empty()){let a=a.trim();let(host,port)=a.rsplit_once(':').filter(|(_,p)|p.parse::<u16>().is_ok()).map(|(h,p)|(h,Some(p))).unwrap_or((a,None));o.game_args.push("--server".into());o.game_args.push(host.into());if let Some(p)=port{o.game_args.push("--port".into());o.game_args.push(p.into())}}
  if profile=="performance"&&loader=="fabric"{let p=if custom{root.clone()}else{root.join("instances").join(&name)};performance_pack(&app,&p,&version).await?}
