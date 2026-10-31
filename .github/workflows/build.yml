@@ -1,0 +1,47 @@
+name: Build Nova Client
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            name: linux
+          - platform: windows-latest
+            name: windows
+          - platform: macos-latest
+            name: macos
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential curl wget file libssl-dev libayatana-appindicator3-dev librsvg2-dev libwebkit2gtk-4.1-dev
+      - name: Install JavaScript dependencies
+        run: npm install
+      - name: Build desktop app
+        run: npm run tauri build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nova-client-${{ matrix.name }}
+          path: src-tauri/target/release/bundle/**
+          if-no-files-found: error
+          retention-days: 14
