@@ -4,18 +4,18 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import './styles.css';
 
 const $ = (s) => document.querySelector(s);
-const state = { account: null, code: null, busy: false };
+const state = { account: null, code: null, busy: false, guestName: localStorage.getItem('nova-guest-name') || '' };
 function toast(message) { const n=$('#toast'); n.textContent=message; n.classList.add('show'); clearTimeout(state.timer); state.timer=setTimeout(()=>n.classList.remove('show'),3200); }
 function status(message) { $('#client-status').textContent=message; }
 function page(name) { document.querySelectorAll('.page').forEach(x=>x.classList.toggle('active-page',x.id===`page-${name}`)); document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active',x.dataset.page===name)); $('#crumb-current').textContent=name.toUpperCase(); }
 function accountView(a) {
  state.account=a||null; const yes=!!a;
- $('#account-label').textContent=yes?a.name:'Connect account'; $('#account-subline').textContent=yes?`${a.name} · Microsoft linked`:'Not connected yet';
- $('#launch-note-title').textContent=yes?`Signed in as ${a.name}`:'Microsoft account required';
- $('#launch-note-sub').textContent=yes?(a.canPlay?'Java Edition access detected.':'Java Edition access not confirmed.'):'Sign in with the account that owns Java Edition.';
+ $('#account-label').textContent=yes?a.name:(state.guestName?`Guest · ${state.guestName}`:'Connect account'); $('#account-subline').textContent=yes?`${a.name} · Microsoft linked`:state.guestName?`${state.guestName} · Guest profile`:'Not connected yet';
+ $('#launch-note-title').textContent=yes?`Signed in as ${a.name}`:(state.guestName?`Guest profile: ${state.guestName}`:'Microsoft account required');
+ $('#launch-note-sub').textContent=yes?(a.canPlay?'Java Edition access detected.':'Java Edition access not confirmed.'):state.guestName?'Guest profiles personalise the launcher only. Sign in with an account that owns Java Edition to play.':'Sign in with the account that owns Java Edition.';
  $('#launch-btn').disabled=!yes||!a.canPlay||state.busy; $('#upload-skin-btn').disabled=!yes;
  $('#hide-cape-btn').disabled=!yes||!(a.capes||[]).some(c=>c.state==='ACTIVE');
- $('#skin-name').textContent=yes?a.name:'No profile connected';
+ $('#skin-name').textContent=yes?a.name:(state.guestName?state.guestName:'No profile connected');
  const skin=yes?(a.skins||[]).find(s=>s.state==='ACTIVE')||(a.skins||[])[0]:null;
  if(skin?.url){$('#active-skin-image').src=skin.url;$('#active-skin-image').classList.add('visible');$('#skin-empty').classList.add('hidden');$('#skin-variant').textContent=(skin.variant||'CLASSIC')+' MODEL';$('#skin-state').textContent=skin.state||'ACTIVE';}
  else{$('#active-skin-image').removeAttribute('src');$('#active-skin-image').classList.remove('visible');$('#skin-empty').classList.remove('hidden');$('#skin-variant').textContent='Waiting for account';$('#skin-state').textContent=yes?'NO SKIN':'OFFLINE';}
@@ -36,7 +36,9 @@ async function hideCape(){try{accountView(await invoke('hide_cape'));}catch(e){t
 async function checkServer(){const address=$('#server-address').value.trim();if(!address)return;$('#server-status').textContent='Checking…';try{const s=await invoke('get_server_status',{address});$('#server-status').textContent=s.online?`ONLINE · ${s.playersOnline??'?'} / ${s.playersMax??'?'} players · ${s.version||''}`:'OFFLINE';}catch(e){$('#server-status').textContent='Status unavailable';}}
 async function init(){
  document.querySelectorAll('.nav-item').forEach(b=>b.onclick=()=>page(b.dataset.page));
- $('#login-btn').onclick=signIn;$('#account-shortcut').onclick=signIn;$('#close-login').onclick=()=>$('#login-modal').classList.remove('visible');
+ $('#login-btn').onclick=()=>$('#login-modal').classList.add('visible');$('#account-shortcut').onclick=()=>$('#login-modal').classList.add('visible');$('#close-login').onclick=()=>$('#login-modal').classList.remove('visible');
+ $('#save-guest-profile').onclick=()=>{const name=$('#guest-profile-name').value.trim();if(!/^[A-Za-z0-9_]{3,16}$/.test(name)){toast('Use 3–16 letters, numbers or underscores.');return;}state.guestName=name;localStorage.setItem('nova-guest-name',name);accountView(state.account);$('#login-modal').classList.remove('visible');toast('Guest profile saved. Game launch still requires Microsoft sign-in and Java Edition ownership.');};
+ $('#guest-profile-name').value=state.guestName;
  $('#launch-btn').onclick=launch;$('#mod-file').onchange=e=>uploadMod(e.target.files?.[0]);$('#mod-search-btn').onclick=searchMods;$('#mod-search').onkeydown=e=>{if(e.key==='Enter')searchMods();};
  $('#server-check').onclick=checkServer;$('#version-select').onchange=mods;$('#game-root').onchange=mods;
  $('#loader-select').onchange=()=>{if($('#profile-select').value==='performance'&&$('#loader-select').value!=='fabric')$('#profile-select').value='custom';};
