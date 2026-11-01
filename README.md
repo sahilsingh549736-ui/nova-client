@@ -5,6 +5,7 @@ Nova Client is an independent Tauri 2 desktop launcher prototype with a JavaScri
 ## Included in this source snapshot
 
 - Microsoft device-code sign-in through the CrustCore authenticator; the app does not request or store a Microsoft password.
+- Local guest display profiles for personalising the launcher without signing in. Guest profiles cannot authenticate, join online-mode servers as a player, or launch Minecraft.
 - Minecraft Java release metadata and scanning of existing local version folders.
 - Vanilla, Fabric, Forge, NeoForge, Quilt and Legacy Fabric launch profiles.
 - A Fabric-focused optional performance mod preset.
